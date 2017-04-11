@@ -346,7 +346,7 @@ conn iOS_cert
     right=%any
     rightauth=pubkey
     rightauth2=xauth
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,2001:470:1:1a5:1::/97
     rightcert=client.cert.pem
     auto=add
 
@@ -358,7 +358,7 @@ conn android_xauth_psk
     right=%any
     rightauth=psk
     rightauth2=xauth
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,2001:470:1:1a5:1::/97
     auto=add
 
 conn networkmanager-strongswan
@@ -369,7 +369,7 @@ conn networkmanager-strongswan
     leftcert=server.cert.pem
     right=%any
     rightauth=pubkey
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,2001:470:1:1a5:1::/97
     rightcert=client.cert.pem
     auto=add
 
@@ -385,7 +385,7 @@ conn ios_ikev2
     leftcert=server.cert.pem
     right=%any
     rightauth=eap-mschapv2
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,2001:470:1:1a5:1::/97
     rightsendcert=never
     eap_identity=%any
     dpdaction=clear
@@ -402,7 +402,7 @@ conn windows7
     leftcert=server.cert.pem
     right=%any
     rightauth=eap-mschapv2
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,2001:470:1:1a5:1::/97
     rightsendcert=never
     eap_identity=%any
     auto=add
@@ -421,9 +421,10 @@ function configure_strongswan(){
                 include strongswan.d/charon/*.conf
         }
         dns1 = 8.8.8.8
-        dns2 = 8.8.4.4
-        nbns1 = 8.8.8.8
-        nbns2 = 8.8.4.4
+        dns2 = 2001:4860:4860::8888
+        #dns2 = 8.8.4.4
+        #nbns1 = 8.8.8.8
+        #nbns2 = 8.8.4.4
 }
 include strongswan.d/*.conf
 EOF
@@ -460,6 +461,7 @@ function SNAT_set(){
 function iptables_check(){
     cat > /etc/sysctl.d/10-ipsec.conf<<-EOF
 net.ipv4.ip_forward=1
+net.ipv6.conf.all.forwarding=1
 EOF
     sysctl --system
     echo "Do you use firewall in CentOS7 instead of iptables?"
@@ -504,6 +506,7 @@ function iptables_set(){
         iptables -A INPUT -i $interface -p udp --dport 4500 -j ACCEPT
         iptables -A INPUT -i $interface -p udp --dport 1701 -j ACCEPT
         iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
+	ip6tables -A POSTROUTING -s 2001:470:1:1a5:1::/97 -o $interface -j MASQUERADE
         #iptables -A FORWARD -j REJECT
         if [ "$use_SNAT_str" = "1" ]; then
             iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
@@ -529,6 +532,7 @@ function iptables_set(){
         iptables -A INPUT -i $interface -p udp --dport 4500 -j ACCEPT
         iptables -A INPUT -i $interface -p udp --dport 1701 -j ACCEPT
         iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
+	ip6tables -A POSTROUTING -s 2001:470:1:1a5:1::/97 -o $interface -j MASQUERADE
         #iptables -A FORWARD -j REJECT
         if [ "$use_SNAT_str" = "1" ]; then
             iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
@@ -542,6 +546,7 @@ function iptables_set(){
     fi
     if [ "$system_str" = "0" ]; then
         service iptables save
+	service ip6tables save
     else
         iptables-save > /etc/iptables.rules
         cat > /etc/network/if-up.d/iptables<<-EOF
@@ -549,6 +554,12 @@ function iptables_set(){
 iptables-restore < /etc/iptables.rules
 EOF
         chmod +x /etc/network/if-up.d/iptables
+	ip6tables-save > /etc/ip6tables.rules
+	cat > /etc/network/if-up.d/ip6tables<<-EOF
+#!/bin/sh
+ip6tables-restore < /etc/ip6tables.rules
+EOF
+	chmod +x /etc/network/if-up.d/ip6tables
     fi
 }
 
