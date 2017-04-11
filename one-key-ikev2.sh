@@ -506,7 +506,6 @@ function iptables_set(){
         iptables -A INPUT -i $interface -p udp --dport 4500 -j ACCEPT
         iptables -A INPUT -i $interface -p udp --dport 1701 -j ACCEPT
         iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
-	ip6tables -A POSTROUTING -s 2001:470:1:1a5:1::/97 -o $interface -j MASQUERADE
         #iptables -A FORWARD -j REJECT
         if [ "$use_SNAT_str" = "1" ]; then
             iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
@@ -516,6 +515,7 @@ function iptables_set(){
             iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
             iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
             iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+	    ip6tables -t nat -A POSTROUTING -s 2001:470:1:1a5:1::/97 -o $interface -j MASQUERADE
         fi
     else
         read -p "Network card interface(default_value:venet0):" interface
@@ -532,7 +532,6 @@ function iptables_set(){
         iptables -A INPUT -i $interface -p udp --dport 4500 -j ACCEPT
         iptables -A INPUT -i $interface -p udp --dport 1701 -j ACCEPT
         iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
-	ip6tables -A POSTROUTING -s 2001:470:1:1a5:1::/97 -o $interface -j MASQUERADE
         #iptables -A FORWARD -j REJECT
         if [ "$use_SNAT_str" = "1" ]; then
             iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
@@ -542,6 +541,7 @@ function iptables_set(){
             iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
             iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
             iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+	    ip6tables -t nat -A POSTROUTING -s 2001:470:1:1a5:1::/97 -o $interface -j MASQUERADE
         fi
     fi
     if [ "$system_str" = "0" ]; then
